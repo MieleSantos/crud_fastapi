@@ -1,13 +1,12 @@
 from typing import List
-from fastapi import APIRouter
-from fastapi import status, Depends, HTTPException, Response
 
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from core.deps import get_session
 from models.curso_model import CursoModel
 from schemas.curso_schema import CursoShema
-from core.deps import get_session
 
 router = APIRouter()
 
@@ -46,8 +45,12 @@ async def get_curso(curso_id: int, db: AsyncSession = Depends(get_cursos)):
             )
 
 
-@router.put("/{curso_id}", response_model=CursoShema, status_code=status.HTTP_202_ACCEPTED)
-async def put_curso(curso_id: int,curso: CursoShema, db: AsyncSession = Depends(get_cursos)):
+@router.put(
+    "/{curso_id}", response_model=CursoShema, status_code=status.HTTP_202_ACCEPTED
+)
+async def put_curso(
+    curso_id: int, curso: CursoShema, db: AsyncSession = Depends(get_cursos)
+):
     async with db as session:
         query = select(CursoModel).filter(CursoModel.id == curso_id)
         result = await session.execute(query)
@@ -57,14 +60,15 @@ async def put_curso(curso_id: int,curso: CursoShema, db: AsyncSession = Depends(
             curso_up.titutlo = curso.titulo
             curso_up.aulas = curso.aulas
             curso_up.horas = curso.horas
-            
+
             await session.commit()
             return curso_up
         else:
             raise HTTPException(
                 detail="Curso não encontrado", status_code=status.HTTP_404_NOT_FOUND
             )
-            
+
+
 @router.delete("/{curso_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_curso(curso_id: int, db: AsyncSession = Depends(get_cursos)):
     async with db as session:
@@ -75,7 +79,7 @@ async def delete_curso(curso_id: int, db: AsyncSession = Depends(get_cursos)):
         if curso_del:
             await session.delete(curso_del)
             await session.commit()
-            
+
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             raise HTTPException(
